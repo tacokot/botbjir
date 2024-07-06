@@ -1,0 +1,64 @@
+import requests
+
+# Read the token from token.txt
+with open('token.txt', 'r') as file:
+    token = file.read().strip()
+
+# API URLs
+level_up_url = "https://api-backend.yescoin.gold/build/levelUp"
+build_url = 'https://api-backend.yescoin.gold/build/getAccountBuildInfo'
+
+# Headers for the requests
+headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "priority": "u=1, i",
+    "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "token": token,  # Use the token read from file
+    "Referer": "https://www.yescoin.gold/",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+}
+
+bodies = ["2", "3"]  # Add more body commands if needed
+
+index = 0
+
+# Prompt user for threshold values
+coin_pool_total_threshold = int(input("upgrade coinlimit tekan level piro: "))
+coin_pool_recovery_threshold = int(input("upgrade fillrate tekan level piro: "))
+
+while True:
+    body = bodies[index % len(bodies)]  # Alternate using body
+    
+    response = requests.get(build_url, headers=headers)  # GET request
+    if response.status_code == 200:
+        response_data = response.json()
+        # Extract coinPoolTotalLevel and coinPoolRecoveryLevel from response_data
+        coin_pool_total_level = response_data.get('data', {}).get('coinPoolTotalLevel', None)
+        coin_pool_recovery_level = response_data.get('data', {}).get('coinPoolRecoveryLevel', None)
+        
+        # Print levels
+        print(f"coinlimit level: {coin_pool_total_level}")
+        print(f"fillrate level: {coin_pool_recovery_level}")
+        
+        # Check if both levels are >= thresholds
+        if (coin_pool_total_level is not None and coin_pool_total_level >= coin_pool_total_threshold) and \
+           (coin_pool_recovery_level is not None and coin_pool_recovery_level >= coin_pool_recovery_threshold):
+            print(f"kabeh wis level == wis cukup sing upgrade level")
+            break
+    else:
+        print(f"Failed to get data: {response.status_code}")
+        break
+    response_level = requests.post(level_up_url, headers=headers, json=body)
+    if response_level.status_code == 200:
+        print(f"Successfully upgrade")
+    else:
+        print(f"Failed to level up: {response_level.status_code}")
+        break
+    index += 1
